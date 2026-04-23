@@ -1,18 +1,31 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
+		const path = new URL(request.url).pathname;
+
+		if (path === "/ai") {
+			const stories = [
+				"This is a story aboasdfadsfut an orange cloud",
+				"This is a story about a llama",
+			];
+			const modelResp: Ai_Cf_Baai_Bge_Base_En_V1_5_Output = await env.AI.run(
+				"@cf/baai/bge-base-en-v1.5",
+				{
+					text: stories,
+				}
+			);
+			return Response.json(modelResp);
+		}
+
+		if (path === "/vectorize") {
+			const vectors: VectorizeVector[] = [
+				{ id: "123", values: [...Array(768).keys()] },
+				{ id: "456", values: [...Array(768).keys()] },
+			];
+
+			let inserted = await env.VECTORIZE.upsert(vectors);
+			return Response.json(inserted);
+		}
+
+		return new Response("Hello World!");
 	},
 } satisfies ExportedHandler<Env>;
